@@ -1,17 +1,33 @@
 import { headers } from "next/headers";
+import {
+  Lock,
+  Clock,
+  Hash,
+  MousePointerClick,
+  ExternalLink,
+  ShieldAlert,
+  LogOut,
+  CircleAlert,
+} from "lucide-react";
 import { isAuthed, isConfigured } from "@/lib/auth";
-import { redis, LINKS_KEY, CLICKS_KEY, type Links, type Clicks } from "@/lib/redis";
-import { loginAction, logoutAction, createLinkAction, deleteLinkAction } from "../actions";
+import { listLinks, linkStatus, type LinkWithMeta } from "@/lib/redis";
+import { loginAction, logoutAction } from "../actions";
+import { Wordmark } from "@/components/wordmark";
+import { CopyButton } from "@/components/copy-button";
+import { DeleteButton } from "@/components/delete-button";
+import { CreateLinkForm } from "@/components/create-link-form";
+import { PasswordField } from "@/components/password-field";
 
 export const dynamic = "force-dynamic";
 
-const ERRORS: Record<string, string> = {
-  invalid: "Wrong password.",
-  ratelimited: "Too many attempts. Wait a minute and try again.",
-  url: "Enter a valid URL.",
-  slug: "Slug can only contain letters, numbers and dashes.",
-  exists: "That slug is already taken.",
-};
+const fmtDate = (ms: number) =>
+  new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(ms));
 
 export default async function AdminPage({
   searchParams,
@@ -28,133 +44,180 @@ export default async function AdminPage({
   const base = `${proto}://${host}`;
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-16">
-      <div className="mb-10 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Admin</h1>
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-10">
+      <header className="flex items-center justify-between">
+        <Wordmark />
         {authed && (
           <form action={logoutAction}>
-            <button className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-              Sign out
+            <button className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-foreground cursor-pointer">
+              <LogOut size={15} aria-hidden /> Sign out
             </button>
           </form>
         )}
+      </header>
+
+      <div className="mt-10">
+        {!configured ? (
+          <NotConfigured />
+        ) : !authed ? (
+          <Login error={error} />
+        ) : (
+          <Dashboard base={base} />
+        )}
       </div>
-
-      {error && ERRORS[error] && (
-        <p className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-          {ERRORS[error]}
-        </p>
-      )}
-
-      {!configured ? (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-          <p className="font-medium">Not configured yet.</p>
-          <p className="mt-1">
-            Set the <code className="font-mono">ADMIN_PASSWORD</code> environment variable, then
-            redeploy.
-          </p>
-        </div>
-      ) : !authed ? (
-        <LoginForm />
-      ) : (
-        <Dashboard base={base} />
-      )}
-    </main>
+    </div>
   );
 }
 
-function LoginForm() {
+function NotConfigured() {
   return (
-    <form action={loginAction} className="space-y-4">
-      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        Owner password
-        <input
-          type="password"
-          name="password"
-          autoFocus
-          required
-          className="mt-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-100"
-        />
-      </label>
-      <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300">
-        Sign in
-      </button>
-    </form>
+    <div className="animate-rise rounded-2xl border border-warning/40 bg-warning/10 p-6">
+      <div className="flex items-center gap-2 font-semibold text-warning">
+        <ShieldAlert size={18} aria-hidden /> Not configured yet
+      </div>
+      <p className="mt-2 text-sm text-muted">
+        Set the <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-xs">ADMIN_PASSWORD</code>{" "}
+        environment variable in your Vercel project, then redeploy.
+      </p>
+    </div>
+  );
+}
+
+function Login({ error }: { error?: string }) {
+  return (
+    <div className="mx-auto max-w-sm animate-rise">
+      <h1 className="font-display text-2xl italic tracking-tight">Owner sign-in</h1>
+      <p className="mt-1 text-sm text-muted">Only you can create links.</p>
+
+      {error && (
+        <p
+          role="alert"
+          className="mt-5 flex items-center gap-2 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger"
+        >
+          {error === "ratelimited" ? <ShieldAlert size={15} /> : <CircleAlert size={15} />}
+          {error === "ratelimited"
+            ? "Too many attempts. Wait a minute and try again."
+            : "Wrong password."}
+        </p>
+      )}
+
+      <form action={loginAction} className="mt-5 space-y-4">
+        <PasswordField name="password" label="Password" autoFocus required />
+        <button className="inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 cursor-pointer">
+          Sign in
+        </button>
+      </form>
+    </div>
   );
 }
 
 async function Dashboard({ base }: { base: string }) {
-  const links = ((await redis.hgetall<Links>(LINKS_KEY)) ?? {}) as Links;
-  const clicks = ((await redis.hgetall<Clicks>(CLICKS_KEY)) ?? {}) as Clicks;
-  const slugs = Object.keys(links).sort();
+  const links = await listLinks();
 
   return (
-    <div className="space-y-10">
-      <form action={createLinkAction} className="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
-        <div>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Destination URL
-          </label>
-          <input
-            name="url"
-            placeholder="https://example.com/some/long/page"
-            required
-            className="mt-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-100"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Custom slug <span className="font-normal text-zinc-400">(optional)</span>
-          </label>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-sm text-zinc-400">{base}/</span>
-            <input
-              name="slug"
-              placeholder="auto-generated"
-              className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-100"
-            />
-          </div>
-        </div>
-        <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300">
-          Create short link
-        </button>
-      </form>
+    <div className="animate-rise space-y-10">
+      <section>
+        <h1 className="font-display text-2xl italic tracking-tight">New link</h1>
+        <p className="mb-4 mt-1 text-sm text-muted">
+          Paste a URL. Add a password, expiry, or click limit if you need them.
+        </p>
+        <CreateLinkForm base={base} />
+      </section>
 
-      <div>
-        <h2 className="mb-3 text-sm font-medium text-zinc-500">
-          {slugs.length} {slugs.length === 1 ? "link" : "links"}
+      <section>
+        <h2 className="mb-3 flex items-baseline gap-2 text-sm font-medium text-muted">
+          Your links
+          <span className="font-mono tabular-nums">({links.length})</span>
         </h2>
-        {slugs.length === 0 ? (
-          <p className="text-sm text-zinc-400">No links yet.</p>
+        {links.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+            <p className="text-sm text-muted">No links yet. Create your first one above.</p>
+          </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {slugs.map((slug) => (
-              <li key={slug} className="flex items-center justify-between gap-4 py-3">
-                <div className="min-w-0">
-                  <a
-                    href={`/${slug}`}
-                    className="font-mono text-sm font-medium hover:underline"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    /{slug}
-                  </a>
-                  <p className="truncate text-xs text-zinc-400">{links[slug]}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-4">
-                  <span className="text-xs tabular-nums text-zinc-400">
-                    {Number(clicks[slug] ?? 0)} clicks
-                  </span>
-                  <form action={deleteLinkAction}>
-                    <input type="hidden" name="slug" value={slug} />
-                    <button className="text-xs text-zinc-400 hover:text-red-600">Delete</button>
-                  </form>
-                </div>
-              </li>
+          <ul className="space-y-3">
+            {links.map((link) => (
+              <LinkRow key={link.slug} link={link} base={base} />
             ))}
           </ul>
         )}
-      </div>
+      </section>
     </div>
+  );
+}
+
+function LinkRow({ link, base }: { link: LinkWithMeta; base: string }) {
+  const status = linkStatus(link, link.clicks);
+  const shortUrl = `${base}/${link.slug}`;
+  const dead = status !== "active";
+
+  return (
+    <li className="rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-sm transition-colors hover:border-muted/40">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={`/${link.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex items-center gap-1 font-mono text-sm font-semibold hover:text-accent ${
+                dead ? "text-muted line-through" : ""
+              }`}
+            >
+              /{link.slug}
+              <ExternalLink size={12} aria-hidden className="opacity-50" />
+            </a>
+            {link.passwordHash && <Badge icon={<Lock size={11} />}>password</Badge>}
+            {link.expiresAt && (
+              <Badge icon={<Clock size={11} />} tone={status === "expired" ? "danger" : "default"}>
+                {status === "expired" ? "expired" : fmtDate(link.expiresAt)}
+              </Badge>
+            )}
+            {link.maxClicks && (
+              <Badge icon={<Hash size={11} />} tone={status === "maxed" ? "danger" : "default"}>
+                {link.clicks}/{link.maxClicks}
+              </Badge>
+            )}
+          </div>
+          <p className="mt-1.5 truncate font-mono text-xs text-muted" title={link.url}>
+            {link.url}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-2.5">
+        <span className="inline-flex items-center gap-1.5 text-xs text-muted">
+          <MousePointerClick size={13} aria-hidden />
+          <span className="font-mono tabular-nums">{link.clicks}</span>
+          {link.clicks === 1 ? "click" : "clicks"}
+        </span>
+        <div className="flex items-center gap-1">
+          <CopyButton value={shortUrl} />
+          <DeleteButton slug={link.slug} />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function Badge({
+  icon,
+  children,
+  tone = "default",
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  tone?: "default" | "danger";
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+        tone === "danger"
+          ? "bg-danger/10 text-danger"
+          : "bg-surface-2 text-muted"
+      }`}
+    >
+      {icon}
+      {children}
+    </span>
   );
 }

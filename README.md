@@ -1,12 +1,23 @@
 # next-url-shortener
 
-The simplest possible URL shortener. One-click deploy to Vercel, data in
+A tiny, self-hosted URL shortener. One-click deploy to Vercel, data in
 [Upstash Redis](https://upstash.com) (via the Vercel Marketplace), and an
 owner-only admin page protected by a single password.
 
-- `/[slug]` → 307 redirect to the destination (and counts the click)
-- `/admin` → password-protected page to add and delete links
-- `/` → minimal landing page
+- `/[slug]` → redirect to the destination (and counts the click)
+- `/admin` → password-protected dashboard to add, copy, and delete links
+- `/` → landing page
+
+### Per-link controls
+
+- **Password protection** — gate a link behind a password (visitors enter it before redirecting)
+- **Expiration** — auto-disable a link after a chosen date/time
+- **Click limit** — cap total clicks; the link dies once it's reached
+
+### Security
+
+- Owner sign-in is **rate-limited** (5 attempts/min per IP); link-password guesses too (10/min)
+- Passwords (owner + per-link) are stored only as SHA-256 hashes, never plaintext
 
 ## One-click deploy
 
@@ -39,11 +50,14 @@ Open <http://localhost:3000/admin>, sign in with `ADMIN_PASSWORD`, and add a lin
 
 ## How it works
 
-- **Storage** — a single Redis hash `links` maps `slug → url`; a `clicks` hash
-  tracks per-slug click counts. See `lib/redis.ts`.
+- **Storage** — a Redis hash `links` maps `slug → {url, password, expiry, click
+  limit, …}` (JSON); a `clicks` hash tracks per-slug counts via atomic `HINCRBY`
+  so click limits are race-safe. See `lib/redis.ts`.
 - **Auth** — `ADMIN_PASSWORD` only. Signing in sets an httpOnly cookie holding a
   SHA-256 hash of the password (never the password itself). See `lib/auth.ts`.
-- **Actions** — add/delete/login/logout are Next.js Server Actions in
+- **Rate limiting** — `@upstash/ratelimit` throttles owner sign-in and per-link
+  password guesses, failing open if Redis is unreachable. See `lib/ratelimit.ts`.
+- **Actions** — create/delete/login/logout/unlock are Next.js Server Actions in
   `app/actions.ts`; no API routes to wire up.
 
 That's the whole thing.

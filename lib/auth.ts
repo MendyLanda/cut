@@ -41,3 +41,8 @@ export async function signOut(): Promise<void> {
 export function isConfigured(): boolean {
   return Boolean(process.env.ADMIN_PASSWORD);
 }
+
+/** Hash used for per-link passwords (never stores the plaintext). */
+export function hashPassword(pw: string): string {
+  return createHash("sha256").update(pw).digest("hex");
+}
