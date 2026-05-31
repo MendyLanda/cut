@@ -1,0 +1,26 @@
+# Keep the build context small and the image clean.
+node_modules
+.next
+.open-next
+.wrangler
+.git
+.github
+.vercel
+npm-debug.log*
+*.log
+
+# Local env / secrets — never bake into the image.
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+
+# Editor / OS cruft
+.DS_Store
+.vscode
+.idea
+
+# Docs and deploy metadata not needed for the build
+README.md
+deploy
+render.yaml
