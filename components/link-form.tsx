@@ -15,6 +15,7 @@ import {
 import { createLinkAction, editLinkAction, type CreateState } from "@/app/actions";
 import { CopyButton, copyText } from "./copy-button";
 import { PasswordField } from "./password-field";
+import { useDelayedRefresh } from "./consistency-notice";
 import type { LinkWithMeta } from "@/lib/links";
 
 const initial: CreateState = { ok: false };
@@ -36,14 +37,17 @@ export function LinkForm({
   mode,
   link,
   onDone,
+  eventualConsistency = false,
 }: {
   base: string;
   mode: "create" | "edit";
   link?: LinkWithMeta;
   onDone?: () => void;
+  eventualConsistency?: boolean;
 }) {
   const action = mode === "create" ? createLinkAction : editLinkAction;
   const [state, formAction, pending] = useActionState(action, initial);
+  const { scheduleRefresh } = useDelayedRefresh(eventualConsistency);
 
   // Fully controlled so values survive a failed submit (React resets
   // uncontrolled fields after an action; controlled state is preserved).
@@ -73,6 +77,8 @@ export function LinkForm({
     } else if (mode === "edit") {
       onDone?.();
     }
+    // On eventually-consistent KV, nudge the list to re-read once it's caught up.
+    scheduleRefresh();
     // Only react to a completed action (new `state` reference).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
@@ -89,6 +95,7 @@ export function LinkForm({
         <CreatedBanner
           url={created.url}
           autoCopied={created.autoCopied}
+          eventualConsistency={eventualConsistency}
           onDismiss={() => setCreated(null)}
         />
       )}
@@ -267,33 +274,42 @@ export function LinkForm({
 function CreatedBanner({
   url,
   autoCopied,
+  eventualConsistency,
   onDismiss,
 }: {
   url: string;
   autoCopied: boolean;
+  eventualConsistency: boolean;
   onDismiss: () => void;
 }) {
   return (
     <div
       role="status"
       aria-live="polite"
-      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 animate-rise"
+      className="rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 animate-rise"
     >
-      <CheckCircle2 size={18} aria-hidden className="text-accent" />
-      <span className="text-sm font-medium">
-        {autoCopied ? "Created & copied to clipboard" : "Short link created"}
-      </span>
-      <code className="rounded bg-surface/70 px-2 py-1 font-mono text-xs">{url}</code>
-      <div className="ml-auto flex items-center gap-1">
-        {!autoCopied && <CopyButton value={url} autoFocus />}
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="rounded-md px-2 py-1 text-xs text-muted hover:text-foreground cursor-pointer"
-        >
-          Dismiss
-        </button>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <CheckCircle2 size={18} aria-hidden className="text-accent" />
+        <span className="text-sm font-medium">
+          {autoCopied ? "Created & copied to clipboard" : "Short link created"}
+        </span>
+        <code className="rounded bg-surface/70 px-2 py-1 font-mono text-xs">{url}</code>
+        <div className="ml-auto flex items-center gap-1">
+          {!autoCopied && <CopyButton value={url} autoFocus />}
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="rounded-md px-2 py-1 text-xs text-muted hover:text-foreground cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
       </div>
+      {eventualConsistency && (
+        <p className="mt-2 pl-[26px] text-xs text-muted">
+          It may take a few seconds to appear in the list below (Cloudflare KV).
+        </p>
+      )}
     </div>
   );
 }

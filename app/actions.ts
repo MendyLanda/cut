@@ -196,12 +196,13 @@ export async function editLinkAction(
   return { ok: true, slug };
 }
 
-export async function deleteLinkAction(formData: FormData) {
-  if (!(await isAuthed())) redirect("/admin");
-  const slug = String(formData.get("slug") ?? "");
+export async function deleteLinkAction(slug: string) {
+  if (!(await isAuthed())) return;
   if (slug) await (await getStore()).deleteLink(slug);
+  // Revalidate but don't redirect: the caller hides the row optimistically so
+  // the deletion is visible immediately even on eventually-consistent KV, where
+  // an immediate re-read could still return the just-deleted link.
   revalidatePath("/admin");
-  redirect("/admin");
 }
 
 /** Verify a per-link password, then count the click and redirect. */

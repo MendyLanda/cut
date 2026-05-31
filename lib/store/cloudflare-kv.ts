@@ -25,6 +25,8 @@ const C = "c:";
  * shortener, where exact-to-the-click caps under concurrency aren't a goal.
  */
 export class KvStore implements Store {
+  readonly kind = "cloudflare-kv" as const;
+
   constructor(private kv: KVNamespaceLike) {}
 
   async getLink(slug: string): Promise<LinkRecord | null> {

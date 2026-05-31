@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { Trash2, Loader2 } from "lucide-react";
 import { deleteLinkAction } from "@/app/actions";
 
-export function DeleteButton({ slug }: { slug: string }) {
+export function DeleteButton({ slug, onDeleted }: { slug: string; onDeleted?: () => void }) {
   const [confirming, setConfirming] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   if (!confirming) {
     return (
@@ -20,22 +21,31 @@ export function DeleteButton({ slug }: { slug: string }) {
     );
   }
 
+  const confirm = () =>
+    startTransition(async () => {
+      await deleteLinkAction(slug);
+      onDeleted?.(); // hide the row immediately, regardless of KV read lag
+    });
+
   return (
-    <form action={deleteLinkAction} className="inline-flex items-center gap-1">
-      <input type="hidden" name="slug" value={slug} />
+    <span className="inline-flex items-center gap-1">
       <button
-        type="submit"
-        className="rounded-md bg-danger px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:opacity-90 cursor-pointer"
+        type="button"
+        onClick={confirm}
+        disabled={pending}
+        className="inline-flex items-center gap-1.5 rounded-md bg-danger px-2.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 cursor-pointer"
       >
-        Confirm delete
+        {pending && <Loader2 size={13} aria-hidden className="animate-spin" />}
+        {pending ? "Deleting…" : "Confirm delete"}
       </button>
       <button
         type="button"
         onClick={() => setConfirming(false)}
-        className="rounded-md px-2 py-1.5 text-xs text-muted hover:text-foreground cursor-pointer"
+        disabled={pending}
+        className="rounded-md px-2 py-1.5 text-xs text-muted hover:text-foreground disabled:opacity-60 cursor-pointer"
       >
         Cancel
       </button>
-    </form>
+    </span>
   );
 }

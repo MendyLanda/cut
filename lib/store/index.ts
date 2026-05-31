@@ -7,7 +7,7 @@ import { UpstashStore } from "./upstash";
 // Re-export the shared link types/helpers so callers get everything from one
 // place: import { getLink, linkStatus, type LinkRecord } from "@/lib/store".
 export * from "../links";
-export type { Store } from "./types";
+export type { Store, StoreKind } from "./types";
 
 // The binding name declared in wrangler.jsonc (kv_namespaces[].binding).
 const KV_BINDING = "CUT_KV";

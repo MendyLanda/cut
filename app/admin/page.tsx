@@ -1,12 +1,13 @@
 import { headers } from "next/headers";
 import { ShieldAlert, LogOut, CircleAlert } from "lucide-react";
 import { isAuthed, isConfigured } from "@/lib/auth";
-import { listLinks } from "@/lib/store";
+import { getStore } from "@/lib/store";
 import { loginAction, logoutAction } from "../actions";
 import { Wordmark } from "@/components/wordmark";
 import { LinkForm } from "@/components/link-form";
 import { LinkList } from "@/components/link-list";
 import { PasswordField } from "@/components/password-field";
+import { ConsistencyBanner } from "@/components/consistency-notice";
 
 export const dynamic = "force-dynamic";
 
@@ -94,16 +95,20 @@ function Login({ error }: { error?: string }) {
 }
 
 async function Dashboard({ base }: { base: string }) {
-  const links = await listLinks();
+  const store = await getStore();
+  const links = await store.listLinks();
+  const eventualConsistency = store.kind === "cloudflare-kv";
 
   return (
     <div className="animate-rise space-y-10">
+      {eventualConsistency && <ConsistencyBanner />}
+
       <section>
         <h1 className="font-display text-2xl italic tracking-tight">New link</h1>
         <p className="mb-4 mt-1 text-sm text-muted">
           Paste a URL. Add a password, expiry, or click limit if you need them.
         </p>
-        <LinkForm base={base} mode="create" />
+        <LinkForm base={base} mode="create" eventualConsistency={eventualConsistency} />
       </section>
 
       <section>
@@ -116,7 +121,7 @@ async function Dashboard({ base }: { base: string }) {
             <p className="text-sm text-muted">No links yet. Create your first one above.</p>
           </div>
         ) : (
-          <LinkList links={links} base={base} />
+          <LinkList links={links} base={base} eventualConsistency={eventualConsistency} />
         )}
       </section>
     </div>

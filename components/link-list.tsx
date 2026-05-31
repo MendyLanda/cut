@@ -14,7 +14,15 @@ const SORT_LABELS: Record<Sort, string> = {
   clicks: "Most clicks",
 };
 
-export function LinkList({ links, base }: { links: LinkWithMeta[]; base: string }) {
+export function LinkList({
+  links,
+  base,
+  eventualConsistency = false,
+}: {
+  links: LinkWithMeta[];
+  base: string;
+  eventualConsistency?: boolean;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>("newest");
 
@@ -84,7 +92,12 @@ export function LinkList({ links, base }: { links: LinkWithMeta[]; base: string 
       ) : (
         <ul className="space-y-3">
           {visible.map((link) => (
-            <LinkRow key={link.slug} link={link} base={base} />
+            <LinkRow
+              key={link.slug}
+              link={link}
+              base={base}
+              eventualConsistency={eventualConsistency}
+            />
           ))}
         </ul>
       )}

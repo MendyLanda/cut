@@ -1,5 +1,7 @@
 import type { LinkRecord, LinkWithMeta } from "../links";
 
+export type StoreKind = "cloudflare-kv" | "upstash";
+
 /**
  * Storage backend contract. Cut talks to this interface only, so the same app
  * runs on any host with a native store:
@@ -13,6 +15,12 @@ import type { LinkRecord, LinkWithMeta } from "../links";
  *   - `incr` powers rate limiting; same atomicity caveat on KV.
  */
 export interface Store {
+  /**
+   * Which backend this is. `cloudflare-kv` is eventually consistent, so the
+   * admin UI warns that a just-made change may take a moment to appear.
+   */
+  readonly kind: StoreKind;
+
   getLink(slug: string): Promise<LinkRecord | null>;
   hasLink(slug: string): Promise<boolean>;
   listLinks(): Promise<LinkWithMeta[]>;

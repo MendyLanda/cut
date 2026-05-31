@@ -22,6 +22,8 @@ function parseRecord(raw: LinkRecord | string): LinkRecord {
 
 /** Upstash Redis backend (Vercel Marketplace, or any Upstash REST database). */
 export class UpstashStore implements Store {
+  readonly kind = "upstash" as const;
+
   // Lazily created so this module is harmless to import on hosts without
   // Upstash env vars (e.g. Cloudflare), where it's never actually used.
   #redis?: Redis;

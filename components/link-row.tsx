@@ -14,11 +14,25 @@ import { CopyButton } from "./copy-button";
 import { DeleteButton } from "./delete-button";
 import { LinkForm } from "./link-form";
 
-export function LinkRow({ link, base }: { link: LinkWithMeta; base: string }) {
+export function LinkRow({
+  link,
+  base,
+  eventualConsistency = false,
+}: {
+  link: LinkWithMeta;
+  base: string;
+  eventualConsistency?: boolean;
+}) {
   const [editing, setEditing] = useState(false);
+  const [deleted, setDeleted] = useState(false);
   const status = linkStatus(link, link.clicks);
   const shortUrl = `${base}/${link.slug}`;
   const dead = status !== "active";
+
+  // Hide immediately on delete. The row is keyed by slug, so this local state
+  // survives the server action's revalidation even if KV still returns the link
+  // for a few seconds — no "I deleted it but it's still there" flicker.
+  if (deleted) return null;
 
   return (
     <li className="rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-sm transition-colors hover:border-muted/40">
@@ -70,13 +84,19 @@ export function LinkRow({ link, base }: { link: LinkWithMeta; base: string }) {
           >
             <Pencil size={14} aria-hidden /> Edit
           </button>
-          <DeleteButton slug={link.slug} />
+          <DeleteButton slug={link.slug} onDeleted={() => setDeleted(true)} />
         </div>
       </div>
 
       {editing && (
         <div className="mt-4 border-t border-border/60 pt-4 animate-rise">
-          <LinkForm base={base} mode="edit" link={link} onDone={() => setEditing(false)} />
+          <LinkForm
+            base={base}
+            mode="edit"
+            link={link}
+            eventualConsistency={eventualConsistency}
+            onDone={() => setEditing(false)}
+          />
         </div>
       )}
     </li>
