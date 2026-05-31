@@ -10,19 +10,19 @@ owner-only admin page protected by a single password.
 
 ## One-click deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMendyLanda%2Fnext-url-shortener&project-name=next-url-shortener&repository-name=next-url-shortener&env=ADMIN_PASSWORD&envDescription=Password%20to%20protect%20the%20admin%20page&envLink=https%3A%2F%2Fgithub.com%2FMendyLanda%2Fnext-url-shortener%23local-development&products=%7B%22integrationSlug%22%3A%22upstash%22%2C%22productSlug%22%3A%22upstash-kv%22%2C%22protocol%22%3A%22storage%22%7D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMendyLanda%2Fnext-url-shortener&project-name=next-url-shortener&repository-name=next-url-shortener&env=ADMIN_PASSWORD&envDescription=Password%20to%20protect%20the%20admin%20page&envLink=https%3A%2F%2Fgithub.com%2FMendyLanda%2Fnext-url-shortener%23local-development)
 
-During the deploy flow Vercel will:
+The deploy takes three short steps:
 
-1. Ask you for `ADMIN_PASSWORD` — choose a strong value.
-2. Let you add **Upstash Redis** from the Marketplace. Accept it and Vercel
-   injects the REST URL + token for you (typically as `KV_REST_API_URL` /
-   `KV_REST_API_TOKEN`, since the Marketplace Redis product descends from the
-   legacy Vercel KV slug). `lib/redis.ts` reads both the `UPSTASH_*` and `KV_*`
-   names, so either set works with no code changes.
-
-If the storage step doesn't appear, just open your project → **Storage** →
-**Add → Upstash → Redis** after the first deploy, then redeploy.
+1. **Clone + set the password** — Vercel clones the repo and prompts for
+   `ADMIN_PASSWORD`. Choose a strong value. (The first build will succeed even
+   before Redis is connected.)
+2. **Add Upstash Redis** — in the new project go to **Storage → Create
+   Database → Upstash → Redis**. Vercel injects the credentials automatically
+   (as `KV_REST_API_URL` / `KV_REST_API_TOKEN`, since the Marketplace Redis
+   product descends from the legacy Vercel KV slug). `lib/redis.ts` reads both
+   the `UPSTASH_*` and `KV_*` names, so either set works with no code changes.
+3. **Redeploy** so the new env vars take effect, then open `/admin`.
 
 ## Local development
 
