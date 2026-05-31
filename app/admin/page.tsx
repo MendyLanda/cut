@@ -5,7 +5,7 @@ import { listLinks } from "@/lib/redis";
 import { loginAction, logoutAction } from "../actions";
 import { Wordmark } from "@/components/wordmark";
 import { LinkForm } from "@/components/link-form";
-import { LinkRow } from "@/components/link-row";
+import { LinkList } from "@/components/link-list";
 import { PasswordField } from "@/components/password-field";
 
 export const dynamic = "force-dynamic";
@@ -116,11 +116,7 @@ async function Dashboard({ base }: { base: string }) {
             <p className="text-sm text-muted">No links yet. Create your first one above.</p>
           </div>
         ) : (
-          <ul className="space-y-3">
-            {links.map((link) => (
-              <LinkRow key={link.slug} link={link} base={base} />
-            ))}
-          </ul>
+          <LinkList links={links} base={base} />
         )}
       </section>
     </div>
