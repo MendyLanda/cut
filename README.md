@@ -79,3 +79,7 @@ Open <http://localhost:3000/admin>, sign in with `ADMIN_PASSWORD`, and add a lin
   Hobby plan runs crons once per day — which is well under the 14-day window.
 
 That's the whole thing.
+
+## License
+
+[MIT](LICENSE) © Mendy Landa
