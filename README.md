@@ -13,14 +13,16 @@ Owner-only admin, protected by a single password. Deploy it anywhere in one clic
   <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/MendyLanda/cut"><img alt="Deploy to Cloudflare" src="https://deploy.workers.cloudflare.com/button" height="32"></a>
   &nbsp;
   <a href="https://railway.com/deploy/PZZYdc?referralCode=IeJ9uX&utm_medium=integration&utm_source=template&utm_campaign=generic"><img alt="Deploy on Railway" src="https://railway.com/button.svg" height="32"></a>
+  &nbsp;
+  <a href="https://render.com/deploy?repo=https://github.com/MendyLanda/cut"><img alt="Deploy to Render" src="https://render.com/images/deploy-to-render-button.svg" height="32"></a>
 </p>
 
 </div>
 
 Each host uses its **native** storage, so there's nothing extra to wire up —
 **[Upstash Redis](https://upstash.com)** on Vercel, **[Workers KV](https://developers.cloudflare.com/kv/)**
-on Cloudflare, and a **managed [Redis](https://redis.io)** on Railway (or any
-host you point a `REDIS_URL` at).
+on Cloudflare, and a **managed [Redis](https://redis.io)** on Railway and Render
+(or any host you point a `REDIS_URL` at).
 
 ## What you get
 
@@ -39,9 +41,9 @@ host you point a `REDIS_URL` at).
 - Owner sign-in is **rate-limited** with layered windows (2/min, 5/hour, 10/day
   per IP); link-password guesses get 2× those limits (4/min, 10/hour, 20/day).
 - Passwords (owner + per-link) are stored only as SHA-256 hashes, never plaintext.
-- Click caps and rate-limit counters are atomic/exact on Redis (Vercel +
-  Railway), and best-effort on Cloudflare KV (eventually consistent, no atomic
-  increment) — plenty for a personal shortener, just not exact under heavy concurrency.
+- Click caps and rate-limit counters are atomic/exact on Redis (Vercel,
+  Railway, Render), and best-effort on Cloudflare KV (eventually consistent, no
+  atomic increment) — plenty for a personal shortener, just not exact under heavy concurrency.
 
 ## Deploy
 
@@ -108,7 +110,34 @@ together for you:
    Redis doesn't archive so there's no keepalive cron here.
 
 Your links go live at `https://<service>.up.railway.app`. The same `REDIS_URL`
-wiring works on **Render**, **Fly.io**, or a plain VPS — point it at any Redis.
+wiring works on **Fly.io** or a plain VPS — point it at any Redis.
+
+</details>
+
+<details>
+<summary><b>▸ Render</b> &nbsp;·&nbsp; storage: managed Key Value (provisioned with the app)</summary>
+
+<br>
+
+Click **Deploy to Render** above. Render reads [`render.yaml`](render.yaml) and
+spins up two services from this repo, wired together for you:
+
+1. **The Cut app** builds with pnpm (detected from `package.json`) — no
+   Dockerfile — and `next start` listens on `$PORT`.
+2. **A Key Value store** (Valkey 8, Redis-compatible) is provisioned alongside
+   it. Its private connection string is injected as `REDIS_URL`, so Cut
+   auto-selects its Redis-over-TCP backend (`lib/store/redis.ts`). It's locked to
+   the private network (`ipAllowList: []`) and set to `noeviction`, so it acts as
+   a durable datastore rather than a cache that drops your links.
+3. **Set one variable** — a strong `ADMIN_PASSWORD` (prompted during deploy).
+   That's it: no external accounts, and no `CRON_SECRET`, because self-hosted
+   Redis doesn't archive so there's no keepalive cron here.
+
+Your links go live at `https://<service>.onrender.com`.
+
+> **Free tier:** Render spins down idle free web services after ~15 minutes, so
+> the first request after a lull takes a few seconds to wake. The links
+> themselves stay put — they live in the Key Value store, not the web service.
 
 </details>
 
