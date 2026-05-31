@@ -1,8 +1,9 @@
-# next-url-shortener
+# Cut ✂️
 
-A tiny, self-hosted URL shortener. One-click deploy to Vercel, data in
-[Upstash Redis](https://upstash.com) (via the Vercel Marketplace), and an
-owner-only admin page protected by a single password.
+**Cut** is a tiny, self-hosted URL shortener — short links that are entirely
+yours. One-click deploy to Vercel, data in [Upstash Redis](https://upstash.com)
+(via the Vercel Marketplace), and an owner-only admin protected by a single
+password.
 
 - `/[slug]` → redirect to the destination (and counts the click)
 - `/admin` → password-protected dashboard to add, copy, edit, and delete links
