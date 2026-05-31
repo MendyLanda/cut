@@ -1,0 +1,31 @@
+# Render Blueprint — one-click deploy of Cut + a managed Key Value (Valkey/Redis)
+# store, wired together automatically. See https://render.com/docs/blueprint-spec
+services:
+  # The Cut app. Render detects pnpm from package.json's packageManager field and
+  # builds straight from the repo — no Dockerfile. `next start` binds $PORT.
+  - type: web
+    name: cut
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm start
+    envVars:
+      # Prompted on deploy (sync: false = not stored in the Blueprint). Protects /admin.
+      - key: ADMIN_PASSWORD
+        sync: false
+      # The Key Value instance's private connection string, injected automatically.
+      # Cut auto-selects its Redis-over-TCP backend (lib/store/redis.ts) when set.
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: cut-kv
+          property: connectionString
+
+  # Managed Key Value store (Valkey 8, Redis-compatible). This is Cut's primary
+  # datastore, so noeviction keeps links from being dropped under memory pressure
+  # (the default allkeys-lru would treat it like a cache and evict keys).
+  - type: keyvalue
+    name: cut-kv
+    plan: free
+    ipAllowList: [] # private network only — no public internet access
+    maxmemoryPolicy: noeviction
