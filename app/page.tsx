@@ -13,6 +13,19 @@ export default function Home() {
       >
         Manage links
       </Link>
+      <p className="mt-12 text-xs text-zinc-400">
+        Generated with{" "}
+        <span className="text-red-500" aria-label="love">
+          ♥
+        </span>{" "}
+        by{" "}
+        <a
+          href="https://s.mendy-landa.dev/next-url-shortener-home-link"
+          className="underline underline-offset-2 hover:text-zinc-600 dark:hover:text-zinc-200"
+        >
+          Mendy
+        </a>
+      </p>
     </main>
   );
 }
