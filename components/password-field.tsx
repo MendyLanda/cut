@@ -10,6 +10,8 @@ export function PasswordField({
   autoFocus = false,
   required = false,
   hint,
+  value,
+  onChange,
 }: {
   name: string;
   label: string;
@@ -17,9 +19,12 @@ export function PasswordField({
   autoFocus?: boolean;
   required?: boolean;
   hint?: string;
+  value?: string; // when provided, the field is controlled
+  onChange?: (v: string) => void;
 }) {
   const [show, setShow] = useState(false);
   const id = useId();
+  const controlled = value !== undefined;
 
   return (
     <div>
@@ -35,6 +40,7 @@ export function PasswordField({
           autoFocus={autoFocus}
           required={required}
           autoComplete="off"
+          {...(controlled ? { value, onChange: (e) => onChange?.(e.target.value) } : {})}
           className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 pr-10 text-sm outline-none transition-colors focus:border-accent focus-visible:ring-2 focus-visible:ring-ring/40"
         />
         <button

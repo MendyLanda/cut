@@ -1,33 +1,14 @@
 import { headers } from "next/headers";
-import {
-  Lock,
-  Clock,
-  Hash,
-  MousePointerClick,
-  ExternalLink,
-  ShieldAlert,
-  LogOut,
-  CircleAlert,
-} from "lucide-react";
+import { ShieldAlert, LogOut, CircleAlert } from "lucide-react";
 import { isAuthed, isConfigured } from "@/lib/auth";
-import { listLinks, linkStatus, type LinkWithMeta } from "@/lib/redis";
+import { listLinks } from "@/lib/redis";
 import { loginAction, logoutAction } from "../actions";
 import { Wordmark } from "@/components/wordmark";
-import { CopyButton } from "@/components/copy-button";
-import { DeleteButton } from "@/components/delete-button";
-import { CreateLinkForm } from "@/components/create-link-form";
+import { LinkForm } from "@/components/link-form";
+import { LinkRow } from "@/components/link-row";
 import { PasswordField } from "@/components/password-field";
 
 export const dynamic = "force-dynamic";
-
-const fmtDate = (ms: number) =>
-  new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(ms));
 
 export default async function AdminPage({
   searchParams,
@@ -76,7 +57,8 @@ function NotConfigured() {
         <ShieldAlert size={18} aria-hidden /> Not configured yet
       </div>
       <p className="mt-2 text-sm text-muted">
-        Set the <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-xs">ADMIN_PASSWORD</code>{" "}
+        Set the{" "}
+        <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-xs">ADMIN_PASSWORD</code>{" "}
         environment variable in your Vercel project, then redeploy.
       </p>
     </div>
@@ -96,7 +78,7 @@ function Login({ error }: { error?: string }) {
         >
           {error === "ratelimited" ? <ShieldAlert size={15} /> : <CircleAlert size={15} />}
           {error === "ratelimited"
-            ? "Too many attempts. Wait a minute and try again."
+            ? "Too many attempts. Slow down and try again later."
             : "Wrong password."}
         </p>
       )}
@@ -121,7 +103,7 @@ async function Dashboard({ base }: { base: string }) {
         <p className="mb-4 mt-1 text-sm text-muted">
           Paste a URL. Add a password, expiry, or click limit if you need them.
         </p>
-        <CreateLinkForm base={base} />
+        <LinkForm base={base} mode="create" />
       </section>
 
       <section>
@@ -142,82 +124,5 @@ async function Dashboard({ base }: { base: string }) {
         )}
       </section>
     </div>
-  );
-}
-
-function LinkRow({ link, base }: { link: LinkWithMeta; base: string }) {
-  const status = linkStatus(link, link.clicks);
-  const shortUrl = `${base}/${link.slug}`;
-  const dead = status !== "active";
-
-  return (
-    <li className="rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-sm transition-colors hover:border-muted/40">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <a
-              href={`/${link.slug}`}
-              target="_blank"
-              rel="noreferrer"
-              className={`inline-flex items-center gap-1 font-mono text-sm font-semibold hover:text-accent ${
-                dead ? "text-muted line-through" : ""
-              }`}
-            >
-              /{link.slug}
-              <ExternalLink size={12} aria-hidden className="opacity-50" />
-            </a>
-            {link.passwordHash && <Badge icon={<Lock size={11} />}>password</Badge>}
-            {link.expiresAt && (
-              <Badge icon={<Clock size={11} />} tone={status === "expired" ? "danger" : "default"}>
-                {status === "expired" ? "expired" : fmtDate(link.expiresAt)}
-              </Badge>
-            )}
-            {link.maxClicks && (
-              <Badge icon={<Hash size={11} />} tone={status === "maxed" ? "danger" : "default"}>
-                {link.clicks}/{link.maxClicks}
-              </Badge>
-            )}
-          </div>
-          <p className="mt-1.5 truncate font-mono text-xs text-muted" title={link.url}>
-            {link.url}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-2.5">
-        <span className="inline-flex items-center gap-1.5 text-xs text-muted">
-          <MousePointerClick size={13} aria-hidden />
-          <span className="font-mono tabular-nums">{link.clicks}</span>
-          {link.clicks === 1 ? "click" : "clicks"}
-        </span>
-        <div className="flex items-center gap-1">
-          <CopyButton value={shortUrl} />
-          <DeleteButton slug={link.slug} />
-        </div>
-      </div>
-    </li>
-  );
-}
-
-function Badge({
-  icon,
-  children,
-  tone = "default",
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  tone?: "default" | "danger";
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-        tone === "danger"
-          ? "bg-danger/10 text-danger"
-          : "bg-surface-2 text-muted"
-      }`}
-    >
-      {icon}
-      {children}
-    </span>
   );
 }

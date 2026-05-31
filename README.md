@@ -5,7 +5,7 @@ A tiny, self-hosted URL shortener. One-click deploy to Vercel, data in
 owner-only admin page protected by a single password.
 
 - `/[slug]` → redirect to the destination (and counts the click)
-- `/admin` → password-protected dashboard to add, copy, and delete links
+- `/admin` → password-protected dashboard to add, copy, edit, and delete links
 - `/` → landing page
 
 ### Per-link controls
@@ -16,7 +16,8 @@ owner-only admin page protected by a single password.
 
 ### Security
 
-- Owner sign-in is **rate-limited** (5 attempts/min per IP); link-password guesses too (10/min)
+- Owner sign-in is **rate-limited** with layered windows (2/min, 5/hour, 10/day per IP);
+  link-password guesses get 2× those limits (4/min, 10/hour, 20/day)
 - Passwords (owner + per-link) are stored only as SHA-256 hashes, never plaintext
 
 ## One-click deploy

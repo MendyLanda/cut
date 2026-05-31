@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Unlink } from "lucide-react";
 import { Wordmark } from "@/components/wordmark";
+import { REPO_LINK } from "@/lib/constants";
 
 export default function NotFound() {
   return (
@@ -17,12 +17,12 @@ export default function NotFound() {
           <p className="mt-2 text-sm text-muted">
             This short link doesn&apos;t exist, or it was deleted.
           </p>
-          <Link
-            href="/"
+          <a
+            href={REPO_LINK}
             className="mt-6 inline-block rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-surface-2"
           >
-            Go home
-          </Link>
+            What is this?
+          </a>
         </div>
       </div>
     </main>

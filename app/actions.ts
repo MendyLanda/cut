@@ -85,33 +85,113 @@ export async function createLinkAction(
   }
 
   const password = String(formData.get("password") ?? "").trim();
-  const expiresRaw = String(formData.get("expiresAt") ?? "").trim();
-  const maxClicksRaw = String(formData.get("maxClicks") ?? "").trim();
-
-  let expiresAt: number | null = null;
-  if (expiresRaw) {
-    const t = new Date(expiresRaw).getTime();
-    if (Number.isNaN(t)) return { ok: false, error: "Invalid expiration date." };
-    if (t <= Date.now()) return { ok: false, error: "Expiration must be in the future." };
-    expiresAt = t;
-  }
-
-  let maxClicks: number | null = null;
-  if (maxClicksRaw) {
-    const n = Number(maxClicksRaw);
-    if (!Number.isInteger(n) || n < 1) return { ok: false, error: "Click limit must be a positive whole number." };
-    maxClicks = n;
-  }
+  const expiry = parseExpiry(formData);
+  if ("error" in expiry) return { ok: false, error: expiry.error };
+  const limit = parseMaxClicks(formData);
+  if ("error" in limit) return { ok: false, error: limit.error };
 
   const record: LinkRecord = {
     url,
     createdAt: Date.now(),
     passwordHash: password ? hashPassword(password) : null,
-    expiresAt,
-    maxClicks,
+    expiresAt: expiry.value,
+    maxClicks: limit.value,
   };
 
   await redis.hset(LINKS_KEY, { [slug]: record });
+  revalidatePath("/admin");
+  return { ok: true, slug };
+}
+
+// The client sends `expiresAt` as an absolute epoch (ms) so the value is
+// timezone-correct regardless of the server's (UTC) clock.
+function parseExpiry(formData: FormData): { value: number | null } | { error: string } {
+  const raw = String(formData.get("expiresAt") ?? "").trim();
+  if (!raw) return { value: null };
+  const t = Number(raw);
+  if (!Number.isFinite(t) || t <= 0) return { error: "Invalid expiration date." };
+  if (t <= Date.now()) return { error: "Expiration must be in the future." };
+  return { value: t };
+}
+
+function parseMaxClicks(formData: FormData): { value: number | null } | { error: string } {
+  const raw = String(formData.get("maxClicks") ?? "").trim();
+  if (!raw) return { value: null };
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1) return { error: "Click limit must be a positive whole number." };
+  return { value: n };
+}
+
+function parseUrl(formData: FormData): { value: string } | { error: string } {
+  let url = String(formData.get("url") ?? "").trim();
+  if (!url) return { error: "Enter a destination URL." };
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  try {
+    new URL(url);
+  } catch {
+    return { error: "That doesn't look like a valid URL." };
+  }
+  return { value: url };
+}
+
+export async function editLinkAction(
+  _prev: CreateState,
+  formData: FormData,
+): Promise<CreateState> {
+  if (!(await isAuthed())) return { ok: false, error: "Not signed in." };
+
+  const originalSlug = String(formData.get("originalSlug") ?? "").trim();
+  const rec = originalSlug ? await getLink(originalSlug) : null;
+  if (!rec) return { ok: false, error: "This link no longer exists." };
+
+  const parsedUrl = parseUrl(formData);
+  if ("error" in parsedUrl) return { ok: false, error: parsedUrl.error };
+
+  const slug = String(formData.get("slug") ?? "")
+    .trim()
+    .toLowerCase();
+  if (!slug) return { ok: false, error: "Slug can't be empty." };
+  if (!/^[a-z0-9-]+$/.test(slug) || RESERVED.has(slug)) {
+    return { ok: false, error: "Slug can only contain letters, numbers and dashes." };
+  }
+  const renamed = slug !== originalSlug;
+  if (renamed && (await redis.hexists(LINKS_KEY, slug))) {
+    return { ok: false, error: `"${slug}" is already taken.` };
+  }
+
+  const expiry = parseExpiry(formData);
+  if ("error" in expiry) return { ok: false, error: expiry.error };
+  const limit = parseMaxClicks(formData);
+  if ("error" in limit) return { ok: false, error: limit.error };
+
+  // Password: blank keeps the current one; "remove" clears it; otherwise set new.
+  const removePassword = formData.get("removePassword") != null;
+  const password = String(formData.get("password") ?? "").trim();
+  let passwordHash = rec.passwordHash ?? null;
+  if (removePassword) passwordHash = null;
+  else if (password) passwordHash = hashPassword(password);
+
+  const resetClicks = formData.get("resetClicks") != null;
+
+  const next: LinkRecord = {
+    url: parsedUrl.value,
+    createdAt: rec.createdAt ?? Date.now(),
+    passwordHash,
+    expiresAt: expiry.value,
+    maxClicks: limit.value,
+  };
+
+  await redis.hset(LINKS_KEY, { [slug]: next });
+
+  if (renamed) {
+    const carried = resetClicks ? 0 : await getClicks(originalSlug);
+    await redis.hdel(LINKS_KEY, originalSlug);
+    await redis.hdel(CLICKS_KEY, originalSlug);
+    if (carried > 0) await redis.hset(CLICKS_KEY, { [slug]: carried });
+  } else if (resetClicks) {
+    await redis.hdel(CLICKS_KEY, slug);
+  }
+
   revalidatePath("/admin");
   return { ok: true, slug };
 }

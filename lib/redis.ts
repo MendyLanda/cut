@@ -1,4 +1,9 @@
 import { Redis } from "@upstash/redis";
+import { type LinkRecord, type LinkWithMeta } from "./links";
+
+// Re-export the shared link types/helpers so existing server imports from
+// "@/lib/redis" keep working.
+export * from "./links";
 
 // The Upstash Redis integration from the Vercel Marketplace injects
 // UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN. We also fall back to the
@@ -13,18 +18,6 @@ export const redis = new Redis({
 // HINCRBY atomically for click limits.
 export const LINKS_KEY = "links";
 export const CLICKS_KEY = "clicks";
-
-export type LinkRecord = {
-  url: string;
-  createdAt: number; // epoch ms
-  passwordHash?: string | null; // sha256 hex when the link is gated
-  expiresAt?: number | null; // epoch ms; link dies after this time
-  maxClicks?: number | null; // link dies after this many clicks
-};
-
-export type LinkWithMeta = LinkRecord & { slug: string; clicks: number };
-
-export type LinkStatus = "active" | "expired" | "maxed";
 
 function parseRecord(raw: LinkRecord | string): LinkRecord {
   // Older versions stored a bare URL string; treat those as un-gated links.
@@ -59,12 +52,6 @@ export async function listLinks(): Promise<LinkWithMeta[]> {
       return { slug, clicks: Number(clicks?.[slug] ?? 0), ...rec };
     })
     .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
-}
-
-export function linkStatus(rec: LinkRecord, clicks: number): LinkStatus {
-  if (rec.expiresAt && Date.now() > rec.expiresAt) return "expired";
-  if (rec.maxClicks && clicks >= rec.maxClicks) return "maxed";
-  return "active";
 }
 
 /**

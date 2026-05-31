@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Lock, Clock, Hash } from "lucide-react";
 import { Wordmark } from "@/components/wordmark";
+import { REPO_LINK } from "@/lib/constants";
 
 export default function Home() {
   return (
@@ -59,7 +60,7 @@ export default function Home() {
         <p className="text-xs text-muted">
           Generated with <span className="text-danger">&#9829;</span> by{" "}
           <a
-            href="https://s.mendy-landa.dev/next-url-shortener-home-link"
+            href={REPO_LINK}
             className="font-medium underline underline-offset-2 transition-colors hover:text-foreground"
           >
             Mendy Landa

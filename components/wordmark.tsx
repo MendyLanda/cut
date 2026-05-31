@@ -1,9 +1,11 @@
-import Link from "next/link";
 import { Scissors } from "lucide-react";
+import { REPO_LINK } from "@/lib/constants";
 
-export function Wordmark({ href = "/" }: { href?: string }) {
+// Links out to REPO_LINK by default (not the app's own home/admin) so the mark
+// never funnels a random visitor toward the owner's admin surface.
+export function Wordmark({ href = REPO_LINK }: { href?: string }) {
   return (
-    <Link
+    <a
       href={href}
       className="group inline-flex items-center gap-2 text-foreground transition-opacity hover:opacity-80"
     >
@@ -11,6 +13,6 @@ export function Wordmark({ href = "/" }: { href?: string }) {
         <Scissors size={16} aria-hidden />
       </span>
       <span className="font-display text-xl italic leading-none tracking-tight">Cut</span>
-    </Link>
+    </a>
   );
 }
