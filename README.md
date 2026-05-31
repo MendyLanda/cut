@@ -21,8 +21,9 @@ Owner-only admin, protected by a single password. Deploy it anywhere in one clic
 
 Each host uses its **native** storage, so there's nothing extra to wire up —
 **[Upstash Redis](https://upstash.com)** on Vercel, **[Workers KV](https://developers.cloudflare.com/kv/)**
-on Cloudflare, and a **managed [Redis](https://redis.io)** on Railway and Render
-(or any host you point a `REDIS_URL` at).
+on Cloudflare, a **managed [Redis](https://redis.io)** on Railway and Render, and
+a **bundled Redis** when you self-host with Docker (Coolify, Dokploy, or plain
+Compose) — or any host you point a `REDIS_URL` at.
 
 ## What you get
 
@@ -42,8 +43,9 @@ on Cloudflare, and a **managed [Redis](https://redis.io)** on Railway and Render
   per IP); link-password guesses get 2× those limits (4/min, 10/hour, 20/day).
 - Passwords (owner + per-link) are stored only as SHA-256 hashes, never plaintext.
 - Click caps and rate-limit counters are atomic/exact on Redis (Vercel,
-  Railway, Render), and best-effort on Cloudflare KV (eventually consistent, no
-  atomic increment) — plenty for a personal shortener, just not exact under heavy concurrency.
+  Railway, Render, self-hosted), and best-effort on Cloudflare KV (eventually
+  consistent, no atomic increment) — plenty for a personal shortener, just not
+  exact under heavy concurrency.
 
 ## Deploy
 
@@ -142,6 +144,50 @@ Your links go live at `https://<service>.onrender.com`.
 </details>
 
 <details>
+<summary><b>▸ Coolify / Dokploy / Docker</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
+
+<br>
+
+Run the whole stack on your own server. Cut ships as a prebuilt image,
+[`ghcr.io/mendylanda/cut`](https://github.com/MendyLanda/cut/pkgs/container/cut),
+and each option below pairs it with a private, persistent Redis — no external
+accounts, and no `CRON_SECRET` (self-hosted Redis doesn't archive).
+
+**[Coolify](https://coolify.io)** — add **Cut** from the service catalog. Coolify
+generates the domain and a strong `ADMIN_PASSWORD` (find it under the service's
+environment variables) and wires the bundled Redis in as `REDIS_URL`. Template
+source: [`deploy/coolify/`](deploy/coolify).
+
+**[Dokploy](https://dokploy.com)** — pick **Cut** from **Templates**. Dokploy
+generates the domain + `ADMIN_PASSWORD` and provisions the Redis for you.
+Template source: [`deploy/dokploy/`](deploy/dokploy).
+
+**Plain Docker Compose / VPS** — no PaaS required:
+
+```yaml
+services:
+  cut:
+    image: ghcr.io/mendylanda/cut:latest
+    environment:
+      - ADMIN_PASSWORD=change-me
+      - REDIS_URL=redis://redis:6379
+    ports: ["3000:3000"]
+    depends_on: [redis]
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes: ["cut-redis-data:/data"]
+volumes:
+  cut-redis-data:
+```
+
+`docker compose up -d`, then open `http://<host>:3000/admin`. Put it behind your
+reverse proxy (Caddy / Traefik / nginx) for HTTPS — Cut reads the request host,
+so there's no base-URL to configure.
+
+</details>
+
+<details>
 <summary><b>▸ Custom domain</b> &nbsp;·&nbsp; any host</summary>
 
 <br>
@@ -185,10 +231,10 @@ it on `workerd`).
 
 - **Storage** — the app talks to one `Store` interface (`lib/store/`) with a
   backend chosen per host at runtime: native **Cloudflare KV** on Workers,
-  **Redis over TCP** when `REDIS_URL` is set (Railway / Render / Fly / VPS), and
-  **Upstash Redis** over REST otherwise. Each keeps links and click counts under
-  its own key layout; adding another host is just a new file implementing the
-  same interface — nothing else changes.
+  **Redis over TCP** when `REDIS_URL` is set (Railway / Render / Coolify /
+  Dokploy / Docker / VPS), and **Upstash Redis** over REST otherwise. Each keeps
+  links and click counts under its own key layout; adding another host is just a
+  new file implementing the same interface — nothing else changes.
 - **Auth** — `ADMIN_PASSWORD` only. Signing in sets an httpOnly cookie holding a
   SHA-256 hash of the password (never the password itself). See `lib/auth.ts`.
 - **Rate limiting** — a small layered fixed-window limiter (`lib/ratelimit.ts`)
@@ -201,6 +247,9 @@ it on `workerd`).
   `next build` output is repackaged into a Worker by `opennextjs-cloudflare`
   (see `wrangler.jsonc` + `open-next.config.ts`), reading the `CUT_KV` binding
   via `getCloudflareContext`.
+- **Docker** — the `Dockerfile` builds a Next.js standalone image, published
+  multi-arch to `ghcr.io/mendylanda/cut` by a GitHub Action. The self-hosted
+  catalog templates under `deploy/` run that image next to a bundled Redis.
 - **Keepalive** — `/api/keepalive` does a real write so idle Upstash free
   databases aren't archived (~14 days; a PING doesn't count). On Vercel a daily
   [Cron](https://vercel.com/docs/cron-jobs) hits it; on Cloudflare KV and
