@@ -80,9 +80,9 @@ If the storage step doesn't appear, open your project → **Storage** →
 
 <br>
 
-Click **Deploy to Cloudflare** above. Cut builds with the
-[OpenNext adapter](https://opennext.js.org/cloudflare) and stores data in native
-**Workers KV** — no external database to set up:
+Click **Deploy to Cloudflare** above. Cut is a native [Hono](https://hono.dev)
+Worker (no adapter) and stores data in native **Workers KV** — no external
+database to set up:
 
 1. **KV is auto-provisioned.** Cloudflare reads `wrangler.jsonc` and creates the
    `CUT_KV` namespace for you (the binding has no `id`, so a fresh one is made on
@@ -103,7 +103,8 @@ Click **Deploy on Railway** above. The template spins up two services, wired
 together for you:
 
 1. **The Cut app** builds straight from this repo — Railway's Nixpacks detects
-   Next.js + pnpm, so there's no Dockerfile, and `next start` listens on `$PORT`.
+   pnpm, so there's no Dockerfile; `pnpm build` bundles the Hono server and
+   `pnpm start` listens on `$PORT`.
 2. **A Redis database** is provisioned alongside it. Its connection string is
    handed to the app as a `REDIS_URL` reference variable, and Cut auto-selects
    its Redis-over-TCP backend (`lib/store/redis.ts`) whenever `REDIS_URL` is set.
@@ -125,7 +126,7 @@ Click **Deploy to Render** above. Render reads [`render.yaml`](render.yaml) and
 spins up two services from this repo, wired together for you:
 
 1. **The Cut app** builds with pnpm (detected from `package.json`) — no
-   Dockerfile — and `next start` listens on `$PORT`.
+   Dockerfile — and `pnpm start` runs the bundled Hono server on `$PORT`.
 2. **A Key Value store** (Valkey 8, Redis-compatible) is provisioned alongside
    it. Its private connection string is injected as `REDIS_URL`, so Cut
    auto-selects its Redis-over-TCP backend (`lib/store/redis.ts`). It's locked to
@@ -208,19 +209,23 @@ dashboard and copy buttons start using it with **no redeploy or config change**.
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in ADMIN_PASSWORD + Upstash credentials
-pnpm dev
+cp .env.example .env   # fill in ADMIN_PASSWORD + a store (Upstash or REDIS_URL)
+pnpm dev               # loads .env automatically, serves on http://localhost:3000
 ```
 
+`pnpm dev` builds the CSS once and runs the server with live reload. Editing
+component classes? Run `pnpm dev:css` in a second terminal to rebuild Tailwind on
+change.
+
 Pull the Upstash credentials from your Vercel project with
-`vercel env pull .env.local`, or copy the REST URL/token from the Upstash console.
+`vercel env pull .env`, or copy the REST URL/token from the Upstash console.
 Prefer a local server instead? Run Redis (`docker run -p 6379:6379 redis`) and set
-`REDIS_URL=redis://localhost:6379` — Cut uses it whenever it's present. Then open
-<http://localhost:3000/admin>, sign in with `ADMIN_PASSWORD`, and add a link.
+`REDIS_URL=redis://localhost:6379` in `.env` — Cut uses it whenever it's present.
+Then open <http://localhost:3000/admin>, sign in with `ADMIN_PASSWORD`, and add a link.
 
 To exercise the **Cloudflare Workers** build locally, copy `.dev.vars.example` to
-`.dev.vars`, fill it in, and run `pnpm preview` (builds with OpenNext and serves
-it on `workerd`).
+`.dev.vars`, fill it in, and run `pnpm preview` — it builds the CSS and serves the
+Worker on `workerd` via `wrangler dev` (with a local KV namespace).
 
 ## How it works
 
@@ -241,15 +246,19 @@ it on `workerd`).
   built on the store's `incr` primitive, so it works on both Redis and KV. It
   throttles owner sign-in and per-link password guesses, failing open if the
   store is unreachable.
-- **Actions** — create/delete/login/logout/unlock are Next.js Server Actions in
-  `app/actions.ts`; no API routes to wire up.
-- **Cloudflare** — runs through the [OpenNext adapter](https://opennext.js.org/cloudflare):
-  `next build` output is repackaged into a Worker by `opennextjs-cloudflare`
-  (see `wrangler.jsonc` + `open-next.config.ts`), reading the `CUT_KV` binding
-  via `getCloudflareContext`.
-- **Docker** — the `Dockerfile` builds a Next.js standalone image, published
-  multi-arch to `ghcr.io/mendylanda/cut` by a GitHub Action. The self-hosted
-  catalog templates under `deploy/` run that image next to a bundled Redis.
+- **App** — a single [Hono](https://hono.dev) app (`src/app.tsx`) renders
+  server-side with hono/jsx and handles every route. Create/edit/delete/login/
+  logout/unlock are plain form `POST`s (`src/routes/`); a small progressive-
+  enhancement script (`public/app.js`) adds copy, show-password, and clipboard
+  niceties. One app runs on all hosts via thin entrypoints: `src/worker.ts`
+  (Cloudflare), `src/node.ts` (Node/Docker), `api/index.ts` (Vercel).
+- **Cloudflare** — runs natively as a Worker (`src/worker.ts`, `wrangler.jsonc`);
+  the `CUT_KV` binding is read off the request `env` via Hono's context storage
+  (`hono/context-storage`), so `lib/store` stays the same across hosts.
+- **Docker** — the `Dockerfile` esbuild-bundles the Hono server to
+  `dist/server.mjs` and publishes a minimal multi-arch image to
+  `ghcr.io/mendylanda/cut` via a GitHub Action. The self-hosted catalog
+  templates under `deploy/` run that image next to a bundled Redis.
 - **Keepalive** — `/api/keepalive` does a real write so idle Upstash free
   databases aren't archived (~14 days; a PING doesn't count). On Vercel a daily
   [Cron](https://vercel.com/docs/cron-jobs) hits it; on Cloudflare KV and

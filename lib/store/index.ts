@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getContext } from "hono/context-storage";
 import type { Store } from "./types";
 import type { KVNamespaceLike } from "./cloudflare-kv";
 import { KvStore } from "./cloudflare-kv";
@@ -19,18 +19,26 @@ let redis: Store | undefined;
 
 /**
  * Picks the storage backend for the current host, in priority order:
- *   1. Cloudflare Workers  → native KV binding is present.
+ *   1. Cloudflare Workers  → native KV binding is present on the request `env`.
  *   2. `REDIS_URL` is set  → Redis over TCP (Railway / Render / Fly / a VPS).
  *   3. Otherwise           → Upstash Redis over REST (Vercel, local dev).
+ *
+ * On Cloudflare the KV namespace arrives as a binding on the per-request `env`
+ * (read via Hono's context storage). `envOverride` lets callers without an HTTP
+ * context — namely the Cloudflare `scheduled` cron — pass the Worker env in.
  */
-export async function getStore(): Promise<Store> {
-  try {
-    const { env } = await getCloudflareContext({ async: true });
-    const kv = (env as Record<string, unknown> | undefined)?.[KV_BINDING];
-    if (kv) return new KvStore(kv as KVNamespaceLike);
-  } catch {
-    // getCloudflareContext throws when not on Cloudflare — fall through.
+export async function getStore(envOverride?: Record<string, unknown>): Promise<Store> {
+  let env = envOverride;
+  if (!env) {
+    try {
+      env = getContext().env as Record<string, unknown> | undefined;
+    } catch {
+      // Not inside a request (e.g. module init) — fall through to env vars.
+    }
   }
+  const kv = env?.[KV_BINDING];
+  if (kv) return new KvStore(kv as KVNamespaceLike);
+
   if (process.env.REDIS_URL) {
     // Dynamic import so ioredis (a Node-only TCP client) is never pulled into the
     // Cloudflare Worker bundle, where REDIS_URL is unset and this branch is dead.

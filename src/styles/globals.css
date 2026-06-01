@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Scan the JSX views/routes for utility classes (no bundler to infer them). */
+@source "../**/*.tsx";
+
 /* ── Theme: "technical editorial" — warm paper in light, near-black in dark,
    with a single emerald "terminal-go" accent. ───────────────────────────── */
 :root {
@@ -17,6 +20,12 @@
   --ring: #059669;
   --glow: rgba(5, 150, 105, 0.1);
   --dot: rgba(28, 25, 23, 0.05);
+
+  /* Font stacks (loaded from Google Fonts in the document head). These back the
+     --font-* theme tokens below; previously supplied by next/font. */
+  --font-geist-sans: "Geist", system-ui, -apple-system, sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-fraunces: "Fraunces", Georgia, "Times New Roman", serif;
 }
 
 @media (prefers-color-scheme: dark) {
