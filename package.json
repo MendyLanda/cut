@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "dev": "pnpm build:css && node --env-file-if-exists=.env --watch --import tsx src/node.ts",
     "dev:css": "tailwindcss -i ./src/styles/globals.css -o ./public/assets/styles.css --watch",
