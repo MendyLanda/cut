@@ -13,12 +13,13 @@
 # testing
 /coverage
 
-# next.js
+# build output
 /.next/
 /out/
-
-# production
 /build
+/dist/
+# Tailwind CLI output (built from src/styles/globals.css)
+/public/assets/
 
 # misc
 .DS_Store

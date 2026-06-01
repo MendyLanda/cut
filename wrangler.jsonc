@@ -1,29 +1,30 @@
 {
-  // Cloudflare Workers config, read by the OpenNext adapter and the
-  // "Deploy to Cloudflare" button. See https://opennext.js.org/cloudflare.
+  // Cloudflare Workers config. Hono runs natively here (no OpenNext adapter).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "cut",
-  "main": ".open-next/worker.js",
+  "main": "src/worker.ts",
   "compatibility_date": "2024-12-30",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
+  // nodejs_compat powers node:crypto (password hashing) and AsyncLocalStorage
+  // (Hono context storage, used to read the KV binding from lib/store).
+  "compatibility_flags": ["nodejs_compat"],
+  // Build the Tailwind CSS before bundling/deploying, so public/assets/styles.css
+  // exists for the assets upload below. Runs on `wrangler dev` and `wrangler
+  // deploy` — including the "Deploy to Cloudflare" button's deploy step.
+  "build": {
+    "command": "pnpm build:css"
   },
-  "services": [
-    {
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "cut"
-    }
-  ],
+  // Static files (built CSS, client JS, icons) — served before the Worker.
+  "assets": {
+    "directory": "./public"
+  },
   // Native storage. No "id" → the deploy button (and `wrangler dev`) auto-create
-  // the namespace and fill it in. Cut reads this binding via getCloudflareContext.
+  // the namespace and fill it in. Cut reads this binding via the request env.
   "kv_namespaces": [
     {
       "binding": "CUT_KV"
     }
   ]
-  // The only secret needed on Cloudflare is ADMIN_PASSWORD (plus optional
-  // CRON_SECRET) — the deploy button prompts for them from .dev.vars.example.
-  // No Upstash here: storage is the native KV namespace above.
+  // The only secret needed on Cloudflare is ADMIN_PASSWORD — the deploy button
+  // prompts for it from .dev.vars.example. No Upstash here: storage is the
+  // native KV namespace above, which never archives (so no keepalive cron).
 }

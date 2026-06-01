@@ -2,7 +2,8 @@
 # store, wired together automatically. See https://render.com/docs/blueprint-spec
 services:
   # The Cut app. Render detects pnpm from package.json's packageManager field and
-  # builds straight from the repo — no Dockerfile. `next start` binds $PORT.
+  # builds straight from the repo — no Dockerfile. `pnpm build` bundles the Hono
+  # server; `pnpm start` runs it and binds $PORT.
   - type: web
     name: cut
     runtime: node

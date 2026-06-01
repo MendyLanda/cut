@@ -1,8 +1,9 @@
+# Dependency build-script approvals. esbuild needs its install script to fetch
+# the native binary (used by the `build:node` bundle step). The rest are
+# transitive dev-only native deps we never run, so their builds are disabled.
 allowBuilds:
+  '@parcel/watcher': false
   esbuild: true
-  sharp: true
-  unrs-resolver: true
-  workerd: true
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+  sharp: false
+  unrs-resolver: false
+  workerd: false

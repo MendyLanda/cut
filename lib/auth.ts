@@ -1,5 +1,7 @@
-import { cookies, headers } from "next/headers";
+import { getContext } from "hono/context-storage";
+import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { createHash } from "node:crypto";
+import { envVar } from "./env";
 
 const COOKIE = "auth";
 
@@ -9,48 +11,45 @@ const COOKIE = "auth";
 // production image served over plain HTTP (common for self-hosted/LAN setups)
 // would set Secure, and the browser would silently drop the cookie — so sign-in
 // would never stick.
-async function isHttps(): Promise<boolean> {
-  const proto = (await headers()).get("x-forwarded-proto");
+function isHttps(): boolean {
+  const proto = getContext().req.header("x-forwarded-proto");
   return proto?.split(",")[0].trim() === "https";
 }
 
 // The cookie never stores the password itself — only a hash of it. On every
 // request we recompute the hash from ADMIN_PASSWORD and compare.
 function token(): string {
-  const pw = process.env.ADMIN_PASSWORD ?? "";
+  const pw = envVar("ADMIN_PASSWORD") ?? "";
   return createHash("sha256").update(pw).digest("hex");
 }
 
 /** True only when ADMIN_PASSWORD is set and the request carries a valid cookie. */
-export async function isAuthed(): Promise<boolean> {
-  if (!process.env.ADMIN_PASSWORD) return false;
-  const store = await cookies();
-  return store.get(COOKIE)?.value === token();
+export function isAuthed(): boolean {
+  if (!envVar("ADMIN_PASSWORD")) return false;
+  return getCookie(getContext(), COOKIE) === token();
 }
 
 /** Returns true and sets the auth cookie when the password matches. */
-export async function signIn(password: string): Promise<boolean> {
-  const expected = process.env.ADMIN_PASSWORD;
+export function signIn(password: string): boolean {
+  const expected = envVar("ADMIN_PASSWORD");
   if (!expected || password !== expected) return false;
-  const store = await cookies();
-  store.set(COOKIE, token(), {
+  setCookie(getContext(), COOKIE, token(), {
     httpOnly: true,
-    secure: await isHttps(),
-    sameSite: "lax",
+    secure: isHttps(),
+    sameSite: "Lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 30, // 30 days
   });
   return true;
 }
 
-export async function signOut(): Promise<void> {
-  const store = await cookies();
-  store.delete(COOKIE);
+export function signOut(): void {
+  deleteCookie(getContext(), COOKIE, { path: "/" });
 }
 
 /** Whether the app is configured at all (password set). */
 export function isConfigured(): boolean {
-  return Boolean(process.env.ADMIN_PASSWORD);
+  return Boolean(envVar("ADMIN_PASSWORD"));
 }
 
 /** Hash used for per-link passwords (never stores the plaintext). */
