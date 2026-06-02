@@ -1,5 +1,5 @@
-import app from "./app";
-import { runKeepalive } from "./routes/keepalive";
+import app from "./app.js";
+import { runKeepalive } from "./routes/keepalive.js";
 
 // Cloudflare Workers entry. Hono runs natively here — no OpenNext adapter. The
 // KV namespace (CUT_KV) and ADMIN_PASSWORD arrive on `env` per request and are

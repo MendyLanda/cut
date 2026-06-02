@@ -1,18 +1,18 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { Layout } from "../views/layout";
+import { Layout } from "../views/layout.js";
 import {
   AdminShell,
   NotConfiguredView,
   LoginView,
   DashboardView,
   EditView,
-} from "../views/admin";
-import type { Filter, Sort } from "../views/link-list";
-import type { LinkFormValues } from "../views/link-form";
-import { isAuthed, isConfigured, signIn, signOut, hashPassword } from "@/lib/auth";
-import { getStore, getLink, type LinkRecord } from "@/lib/store";
-import { allowLoginAttempt } from "@/lib/ratelimit";
+} from "../views/admin.js";
+import type { Filter, Sort } from "../views/link-list.js";
+import type { LinkFormValues } from "../views/link-form.js";
+import { isAuthed, isConfigured, signIn, signOut, hashPassword } from "../../lib/auth.js";
+import { getStore, getLink, type LinkRecord } from "../../lib/store/index.js";
+import { allowLoginAttempt } from "../../lib/ratelimit.js";
 import {
   isValidSlug,
   randomSlug,
@@ -20,8 +20,8 @@ import {
   parseExpiry,
   parseMaxClicks,
   isErr,
-} from "@/lib/validate";
-import { clientIp, baseUrl } from "../util";
+} from "../../lib/validate.js";
+import { clientIp, baseUrl } from "../util.js";
 
 export const admin = new Hono();
 

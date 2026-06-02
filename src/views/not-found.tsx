@@ -1,6 +1,6 @@
-import { Unlink } from "./icons";
-import { Wordmark } from "./wordmark";
-import { REPO_LINK } from "@/lib/constants";
+import { Unlink } from "./icons.js";
+import { Wordmark } from "./wordmark.js";
+import { REPO_LINK } from "../../lib/constants.js";
 
 export function NotFoundPage() {
   return (

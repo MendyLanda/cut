@@ -1,7 +1,7 @@
 import type { Child } from "hono/jsx";
-import { Lock, Clock, Ban, ShieldAlert, ArrowRight } from "./icons";
-import { Wordmark } from "./wordmark";
-import { PasswordField } from "./password-field";
+import { Lock, Clock, Ban, ShieldAlert, ArrowRight } from "./icons.js";
+import { Wordmark } from "./wordmark.js";
+import { PasswordField } from "./password-field.js";
 
 function Centered({ children }: { children: Child }) {
   return (

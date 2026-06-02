@@ -1,5 +1,5 @@
-import { type LinkRecord, type LinkWithMeta } from "../links";
-import type { Store } from "./types";
+import { type LinkRecord, type LinkWithMeta } from "../links.js";
+import type { Store } from "./types.js";
 
 // Minimal structural type for a Cloudflare KV namespace — just the bits we use.
 // Avoids a hard dependency on @cloudflare/workers-types.

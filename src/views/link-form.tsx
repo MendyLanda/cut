@@ -1,5 +1,5 @@
-import { Link2, Clock, Hash, Plus, Save, CircleAlert, RotateCcw } from "./icons";
-import { PasswordField } from "./password-field";
+import { Link2, Clock, Hash, Plus, Save, CircleAlert, RotateCcw } from "./icons.js";
+import { PasswordField } from "./password-field.js";
 
 export type LinkFormValues = {
   url?: string;

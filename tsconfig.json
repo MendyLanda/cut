@@ -14,11 +14,8 @@
     "verbatimModuleSyntax": false,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "types": ["node"],
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "api/**/*.ts", "lib/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "lib/**/*.ts"],
   "exclude": ["node_modules", "dist", "public"]
 }

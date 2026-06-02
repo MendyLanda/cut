@@ -20,6 +20,8 @@
 /dist/
 # Tailwind CLI output (built from src/styles/globals.css)
 /public/assets/
+# scratch dir for local Vercel-runtime simulation
+/.vtest/
 
 # misc
 .DS_Store

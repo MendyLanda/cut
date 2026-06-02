@@ -4,6 +4,6 @@
 // are served by Vercel's CDN. The actual app lives in ./app, shared with the
 // Node (src/node.ts) and Cloudflare (src/worker.ts) entries.
 import "hono";
-import app from "./app";
+import app from "./app.js";
 
 export default app;

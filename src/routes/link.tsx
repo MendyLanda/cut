@@ -1,11 +1,11 @@
 import { Hono } from "hono";
-import { getLink, getClicks, linkStatus, consumeClick } from "@/lib/store";
-import { hashPassword } from "@/lib/auth";
-import { allowUnlockAttempt } from "@/lib/ratelimit";
-import { clientIp } from "../util";
-import { Layout } from "../views/layout";
-import { ExpiredPage, MaxedPage, PasswordPage } from "../views/slug";
-import { NotFoundPage } from "../views/not-found";
+import { getLink, getClicks, linkStatus, consumeClick } from "../../lib/store/index.js";
+import { hashPassword } from "../../lib/auth.js";
+import { allowUnlockAttempt } from "../../lib/ratelimit.js";
+import { clientIp } from "../util.js";
+import { Layout } from "../views/layout.js";
+import { ExpiredPage, MaxedPage, PasswordPage } from "../views/slug.js";
+import { NotFoundPage } from "../views/not-found.js";
 
 export const link = new Hono();
 

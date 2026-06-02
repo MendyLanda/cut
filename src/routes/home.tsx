@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { Layout } from "../views/layout";
-import { HomePage } from "../views/home";
+import { Layout } from "../views/layout.js";
+import { HomePage } from "../views/home.js";
 
 export const home = new Hono();
 

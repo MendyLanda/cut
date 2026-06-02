@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { contextStorage } from "hono/context-storage";
-import { Layout } from "./views/layout";
-import { NotFoundPage } from "./views/not-found";
-import { home } from "./routes/home";
-import { admin } from "./routes/admin";
-import { keepalive } from "./routes/keepalive";
-import { link } from "./routes/link";
+import { Layout } from "./views/layout.js";
+import { NotFoundPage } from "./views/not-found.js";
+import { home } from "./routes/home.js";
+import { admin } from "./routes/admin.js";
+import { keepalive } from "./routes/keepalive.js";
+import { link } from "./routes/link.js";
 
 export const app = new Hono();
 

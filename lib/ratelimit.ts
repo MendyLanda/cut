@@ -1,4 +1,4 @@
-import { getStore } from "./store";
+import { getStore } from "./store/index.js";
 
 // Layered fixed-window limits: an attempt must pass EVERY tier. Owner sign-in is
 // strictest (2/min, 5/hour, 10/day); per-link password guesses get 2× those.
