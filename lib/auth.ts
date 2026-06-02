@@ -1,7 +1,7 @@
 import { getContext } from "hono/context-storage";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { createHash } from "node:crypto";
-import { envVar } from "./env";
+import { envVar } from "./env.js";
 
 const COOKIE = "auth";
 

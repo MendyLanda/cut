@@ -13,9 +13,9 @@ import {
   Cloud,
   Container,
   GitHubMark,
-} from "./icons";
-import { Wordmark } from "./wordmark";
-import { REPO_LINK } from "@/lib/constants";
+} from "./icons.js";
+import { Wordmark } from "./wordmark.js";
+import { REPO_LINK } from "../../lib/constants.js";
 
 export function HomePage() {
   return (

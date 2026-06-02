@@ -1,13 +1,13 @@
 import { getContext } from "hono/context-storage";
-import type { Store } from "./types";
-import type { KVNamespaceLike } from "./cloudflare-kv";
-import { KvStore } from "./cloudflare-kv";
-import { UpstashStore } from "./upstash";
+import type { Store } from "./types.js";
+import type { KVNamespaceLike } from "./cloudflare-kv.js";
+import { KvStore } from "./cloudflare-kv.js";
+import { UpstashStore } from "./upstash.js";
 
 // Re-export the shared link types/helpers so callers get everything from one
-// place: import { getLink, linkStatus, type LinkRecord } from "@/lib/store".
-export * from "../links";
-export type { Store, StoreKind } from "./types";
+// place: import { getLink, linkStatus, type LinkRecord } from "../../lib/store/index.js".
+export * from "../links.js";
+export type { Store, StoreKind } from "./types.js";
 
 // The binding name declared in wrangler.jsonc (kv_namespaces[].binding).
 const KV_BINDING = "CUT_KV";
@@ -42,7 +42,7 @@ export async function getStore(envOverride?: Record<string, unknown>): Promise<S
   if (process.env.REDIS_URL) {
     // Dynamic import so ioredis (a Node-only TCP client) is never pulled into the
     // Cloudflare Worker bundle, where REDIS_URL is unset and this branch is dead.
-    const { RedisStore } = await import("./redis");
+    const { RedisStore } = await import("./redis.js");
     return (redis ??= new RedisStore());
   }
   return upstash;

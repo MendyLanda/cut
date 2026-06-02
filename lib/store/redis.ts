@@ -1,6 +1,6 @@
 import { Redis } from "ioredis";
-import { type LinkRecord, type LinkWithMeta } from "../links";
-import type { Store } from "./types";
+import { type LinkRecord, type LinkWithMeta } from "../links.js";
+import type { Store } from "./types.js";
 
 // Same key layout as the Upstash backend so the two are wire-compatible: `links`
 // holds slug -> LinkRecord JSON, `clicks` is a separate counter hash we can

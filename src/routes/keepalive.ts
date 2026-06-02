@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { getStore } from "@/lib/store";
-import { envVar } from "@/lib/env";
+import { getStore } from "../../lib/store/index.js";
+import { envVar } from "../../lib/env.js";
 
 export const keepalive = new Hono();
 

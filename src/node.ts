@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import app from "./app";
+import app from "./app.js";
 
 // Self-hosted / Docker entry. A persistent Node server serving the same app,
 // with static files (built CSS, client JS, icons) served from ./public first.

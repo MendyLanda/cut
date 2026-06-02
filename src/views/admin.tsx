@@ -8,12 +8,12 @@ import {
   Info,
   RefreshCw,
   X,
-} from "./icons";
-import { Wordmark } from "./wordmark";
-import { LinkForm, type LinkFormValues } from "./link-form";
-import { LinkList, type Filter, type Sort } from "./link-list";
-import { PasswordField } from "./password-field";
-import type { LinkWithMeta } from "@/lib/links";
+} from "./icons.js";
+import { Wordmark } from "./wordmark.js";
+import { LinkForm, type LinkFormValues } from "./link-form.js";
+import { LinkList, type Filter, type Sort } from "./link-list.js";
+import { PasswordField } from "./password-field.js";
+import type { LinkWithMeta } from "../../lib/links.js";
 
 /** Outer chrome shared by every admin view: header + (when authed) sign-out. */
 export function AdminShell({ authed, children }: { authed: boolean; children: Child }) {

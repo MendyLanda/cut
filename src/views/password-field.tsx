@@ -1,4 +1,4 @@
-import { Eye, EyeOff } from "./icons";
+import { Eye, EyeOff } from "./icons.js";
 
 /**
  * Password input with a show/hide toggle. The toggle is progressive enhancement:

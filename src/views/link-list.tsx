@@ -9,8 +9,8 @@ import {
   Pencil,
   Copy,
   Trash2,
-} from "./icons";
-import { linkStatus, type LinkWithMeta, type LinkStatus } from "@/lib/links";
+} from "./icons.js";
+import { linkStatus, type LinkWithMeta, type LinkStatus } from "../../lib/links.js";
 
 export type Filter = "all" | LinkStatus;
 export type Sort = "newest" | "oldest" | "clicks";

@@ -1,4 +1,4 @@
-import type { LinkRecord, LinkWithMeta } from "../links";
+import type { LinkRecord, LinkWithMeta } from "../links.js";
 
 export type StoreKind = "cloudflare-kv" | "upstash" | "redis";
 

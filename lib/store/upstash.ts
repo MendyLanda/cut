@@ -1,6 +1,6 @@
 import { Redis } from "@upstash/redis";
-import { type LinkRecord, type LinkWithMeta } from "../links";
-import type { Store } from "./types";
+import { type LinkRecord, type LinkWithMeta } from "../links.js";
+import type { Store } from "./types.js";
 
 // `links` holds slug -> LinkRecord (stored as JSON; @upstash/redis serializes
 // objects automatically). `clicks` is a separate counter hash so we can

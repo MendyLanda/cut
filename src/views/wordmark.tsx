@@ -1,5 +1,5 @@
-import { Scissors } from "./icons";
-import { REPO_LINK } from "@/lib/constants";
+import { Scissors } from "./icons.js";
+import { REPO_LINK } from "../../lib/constants.js";
 
 // Links out to REPO_LINK by default (not the app's own home/admin) so the mark
 // never funnels a random visitor toward the owner's admin surface.
