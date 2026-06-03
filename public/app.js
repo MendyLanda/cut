@@ -115,7 +115,7 @@
     if (ms) el.textContent = fmt.format(new Date(ms));
   });
 
-  // ── "Created" banner: auto-copy the new link, refresh list on KV ────────
+  // ── "Created" banner: auto-copy the new link ────────────────────────────
   var created = document.querySelector("[data-created-banner]");
   if (created) {
     var url = created.getAttribute("data-url");
@@ -125,17 +125,26 @@
         if (ok && label) label.textContent = "Created & copied to clipboard";
       });
     }
-    var reloadTo = created.getAttribute("data-reload-to");
-    if (reloadTo) {
-      // Eventually-consistent KV: give the write a moment, then reload a clean
-      // URL so the list catches up and the one-shot banner doesn't repeat.
-      setTimeout(function () {
-        location.replace(reloadTo);
-      }, 2500);
-    }
   }
 
-  // ── Dismiss the KV consistency notice ───────────────────────────────────
+  // ── KV consistency notice: a one-time FYI ───────────────────────────────
+  // Show it only on the first visit, then never again. The × dismisses early.
+  var SEEN_KEY = "kv-consistency-seen";
+  var notice = document.querySelector("[data-consistency-banner]");
+  if (notice) {
+    var seen;
+    try {
+      seen = localStorage.getItem(SEEN_KEY);
+    } catch (_) {
+      seen = null;
+    }
+    if (!seen) {
+      notice.hidden = false;
+      try {
+        localStorage.setItem(SEEN_KEY, "1");
+      } catch (_) {}
+    }
+  }
   document.addEventListener("click", function (e) {
     var btn = e.target.closest && e.target.closest("[data-dismiss-banner]");
     if (!btn) return;

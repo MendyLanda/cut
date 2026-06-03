@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Copy,
   Info,
-  RefreshCw,
   X,
 } from "./icons.js";
 import { Wordmark } from "./wordmark.js";
@@ -143,7 +142,6 @@ function CreatedBanner({ url, eventualConsistency }: { url: string; eventualCons
       aria-live="polite"
       data-created-banner
       data-url={url}
-      data-reload-to={eventualConsistency ? "/admin" : undefined}
       class="rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 animate-rise"
     >
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -171,12 +169,16 @@ function CreatedBanner({ url, eventualConsistency }: { url: string; eventualCons
   );
 }
 
-/** Heads-up shown only on eventually-consistent KV. Dismiss/refresh via app.js. */
+/**
+ * One-time FYI shown only on eventually-consistent KV. app.js hides it after
+ * the first view (localStorage) so it never nags, and the × dismisses it early.
+ */
 function ConsistencyBanner() {
   return (
     <div
       role="note"
       data-consistency-banner
+      hidden
       class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm animate-rise"
     >
       <Info size={16} class="shrink-0 text-warning" />
@@ -185,22 +187,14 @@ function ConsistencyBanner() {
         <span class="font-medium">eventually consistent</span>: changes save instantly, but the
         list below can take a few seconds to catch up.
       </p>
-      <div class="ml-auto flex items-center gap-1">
-        <a
-          href="/admin"
-          class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-warning transition-colors hover:bg-warning/10"
-        >
-          <RefreshCw size={13} /> Refresh
-        </a>
-        <button
-          type="button"
-          data-dismiss-banner
-          aria-label="Dismiss notice"
-          class="rounded-md p-1.5 text-muted transition-colors hover:bg-surface-2 hover:text-foreground cursor-pointer"
-        >
-          <X size={14} />
-        </button>
-      </div>
+      <button
+        type="button"
+        data-dismiss-banner
+        aria-label="Dismiss notice"
+        class="ml-auto rounded-md p-1.5 text-muted transition-colors hover:bg-surface-2 hover:text-foreground cursor-pointer"
+      >
+        <X size={14} />
+      </button>
     </div>
   );
 }
