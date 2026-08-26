@@ -29,7 +29,19 @@ Compose) — or any host you point a `REDIS_URL` at.
 
 - `/[slug]` → redirect to the destination (and count the click)
 - `/admin` → password-protected dashboard to add, copy, edit, and delete links
-- `/` → landing page
+- `/` → landing page by default, configurable with `HOME_PAGE`
+
+### Home page behavior
+
+`HOME_PAGE` controls only `/`. Short links and `/admin` keep their usual behavior.
+
+| Value | Response from `/` |
+| --- | --- |
+| unset or `default` | Show the landing page |
+| `404` | Return an empty `404` response |
+| `admin` | Redirect to `/admin`, which shows the login page or dashboard |
+
+Any other value falls back to the landing page.
 
 **Per-link controls**
 
@@ -171,6 +183,8 @@ services:
     image: ghcr.io/mendylanda/cut:latest
     environment:
       - ADMIN_PASSWORD=change-me
+      # Optional: default, 404, or admin
+      - HOME_PAGE=default
       - REDIS_URL=redis://redis:6379
     ports: ["3000:3000"]
     depends_on: [redis]

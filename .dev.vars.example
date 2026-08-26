@@ -1,6 +1,6 @@
-# Secrets for Cloudflare Workers. The "Deploy to Cloudflare" button reads this
-# file and prompts for each value during setup. For local Workers preview
-# (`pnpm preview`), copy this to `.dev.vars` and fill it in.
+# Environment values for Cloudflare Workers. The "Deploy to Cloudflare" button
+# reads this file and prompts for each value during setup. For local Workers
+# preview (`pnpm preview`), copy this to `.dev.vars` and fill it in.
 #
 # Storage is the native KV namespace (CUT_KV in wrangler.jsonc) — no database
 # credentials needed here.
@@ -9,3 +9,7 @@
 # (This is the only secret Cloudflare needs — no database creds, no cron secret:
 # KV is a native binding and never archives, so there's no keepalive cron here.)
 ADMIN_PASSWORD=
+
+# Optional: controls GET /. Leave unset or use "default" for the landing page,
+# "404" for an empty 404 response, or "admin" to redirect to /admin.
+HOME_PAGE=
