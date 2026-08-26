@@ -15,6 +15,7 @@
     "start": "node dist/server.mjs",
     "preview": "wrangler dev",
     "deploy": "wrangler deploy",
+    "test": "node --import tsx --test src/routes/home.test.tsx",
     "typecheck": "tsc --noEmit",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },

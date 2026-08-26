@@ -6,9 +6,9 @@ import { getContext } from "hono/context-storage";
  *     NOT `process.env`).
  *   - Node / Vercel      → `process.env`.
  *
- * Used for values that must work on every host (ADMIN_PASSWORD, CRON_SECRET).
- * The store-backend env vars (REDIS_URL, UPSTASH_*) are only ever read on the
- * hosts where they live in `process.env`, so they don't need this.
+ * Used for values that must work on every host (ADMIN_PASSWORD, CRON_SECRET,
+ * HOME_PAGE). The store-backend env vars (REDIS_URL, UPSTASH_*) are only ever
+ * read on the hosts where they live in `process.env`, so they don't need this.
  */
 export function envVar(key: string): string | undefined {
   try {

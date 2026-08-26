@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # Multi-stage build for the self-hosted Cut image (ghcr.io/mendylanda/cut),
 # consumed by the Coolify and Dokploy one-click templates. Produces a minimal
-# Hono server (esbuild bundle) that listens on $PORT and reads REDIS_URL +
-# ADMIN_PASSWORD from the environment.
+# Hono server (esbuild bundle) that listens on $PORT and reads its configuration
+# from the environment.
 
 ARG NODE_VERSION=22-alpine
 
