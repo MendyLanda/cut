@@ -156,20 +156,11 @@ Your links go live at `https://<service>.onrender.com`.
 
 </details>
 
-<details>
-<summary><b>▸ Coolify / Dokploy / Docker</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
-
-<br>
-
-Run the whole stack on your own server. Cut ships as a prebuilt image,
-[`ghcr.io/mendylanda/cut`](https://github.com/MendyLanda/cut/pkgs/container/cut),
-and each option below pairs it with a private, persistent Redis — no external
-accounts, and no `CRON_SECRET` (self-hosted Redis doesn't archive).
-
 ### Coolify
 
 In Coolify, create a new resource with **Docker Compose Empty** and paste this
-Compose file into the editor:
+Compose file into the editor. It runs the prebuilt Cut image with a private,
+persistent Redis, so no external database or `CRON_SECRET` is needed.
 
 ```yaml
 services:
@@ -209,6 +200,16 @@ under **Configuration → Environment Variables**, then open `/admin` on the
 generated domain. Redis stays private to the stack and keeps links in the
 `cut-redis-data` volume. The [Compose source](deploy/coolify/cut.yaml) is kept
 in this repo.
+
+<details>
+<summary><b>▸ Dokploy / Docker</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
+
+<br>
+
+Both options use the prebuilt
+[`ghcr.io/mendylanda/cut`](https://github.com/MendyLanda/cut/pkgs/container/cut)
+image with a private, persistent Redis. No external database or `CRON_SECRET`
+is needed.
 
 **[Dokploy](https://dokploy.com)** — pick **Cut** from **Templates**. Dokploy
 generates the domain + `ADMIN_PASSWORD` and provisions the Redis for you.
