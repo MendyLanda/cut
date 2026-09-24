@@ -1,25 +1,20 @@
-# Self-hosted catalog templates
+# Self-hosted deployment files
 
-These are the source files for Cut's one-click entries in the **Coolify** and
-**Dokploy** template catalogs. Both deploy the published image
+These are the source files for Cut's **Coolify** and **Dokploy** deployments.
+Both run the published image
 [`ghcr.io/mendylanda/cut`](https://github.com/MendyLanda/cut/pkgs/container/cut)
 (built by [`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml))
 alongside a private, persistent Redis — so each is a self-contained stack.
 
-They're kept here so the canonical definitions live with the app; the actual
-catalog listings live in the upstream repos below.
-
 ## `coolify/`
 
-- `cut.yaml` — the Compose service template (uses Coolify magic vars:
+- `cut.yaml` — the Compose definition (uses Coolify magic vars:
   `SERVICE_FQDN_CUT_3000` for routing, `SERVICE_PASSWORD_ADMIN` for the admin
   password).
-- `svgs/cut.svg` — the logo.
+- `svgs/cut.svg` — the logo prepared for a future catalog entry.
 
-Submitted to [`coollabsio/coolify`](https://github.com/coollabsio/coolify)
-(default branch `v4.x`) as `templates/compose/cut.yaml` + `public/svgs/cut.svg`
-(the template's `logo: svgs/cut.svg` resolves under `public/`).
-See <https://coolify.io/docs/get-started/contribute/service>.
+Coolify does not list Cut in its service catalog. Create a Docker Compose Empty
+service and paste the stack from the [main README](../README.md#coolify).
 
 ## `dokploy/`
 
