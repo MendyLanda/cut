@@ -64,7 +64,7 @@ Any other value falls back to the landing page.
 Pick your host for the details:
 
 <details>
-<summary><b>▸ Vercel</b> &nbsp;·&nbsp; storage: Upstash Redis (from the Marketplace)</summary>
+<summary><b>Vercel</b> &nbsp;·&nbsp; storage: Upstash Redis (from the Marketplace)</summary>
 
 <br>
 
@@ -88,7 +88,7 @@ If the storage step doesn't appear, open your project → **Storage** →
 </details>
 
 <details>
-<summary><b>▸ Cloudflare Workers</b> &nbsp;·&nbsp; storage: native KV (auto-created)</summary>
+<summary><b>Cloudflare Workers</b> &nbsp;·&nbsp; storage: native KV (auto-created)</summary>
 
 <br>
 
@@ -107,7 +107,7 @@ database to set up:
 </details>
 
 <details>
-<summary><b>▸ Railway</b> &nbsp;·&nbsp; storage: managed Redis (provisioned with the app)</summary>
+<summary><b>Railway</b> &nbsp;·&nbsp; storage: managed Redis (provisioned with the app)</summary>
 
 <br>
 
@@ -130,7 +130,7 @@ wiring works on **Fly.io** or a plain VPS — point it at any Redis.
 </details>
 
 <details>
-<summary><b>▸ Render</b> &nbsp;·&nbsp; storage: managed Key Value (provisioned with the app)</summary>
+<summary><b>Render</b> &nbsp;·&nbsp; storage: managed Key Value (provisioned with the app)</summary>
 
 <br>
 
@@ -156,7 +156,11 @@ Your links go live at `https://<service>.onrender.com`.
 
 </details>
 
-### Coolify
+<a name="coolify"></a>
+<details>
+<summary><b>Coolify</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
+
+<br>
 
 In Coolify, create a new resource with **Docker Compose Empty** and paste this
 Compose file into the editor. It runs the prebuilt Cut image with a private,
@@ -201,8 +205,10 @@ generated domain. Redis stays private to the stack and keeps links in the
 `cut-redis-data` volume. The [Compose source](deploy/coolify/cut.yaml) is kept
 in this repo.
 
+</details>
+
 <details>
-<summary><b>▸ Dokploy / Docker</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
+<summary><b>Dokploy / Docker</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
 
 <br>
 
@@ -243,7 +249,7 @@ so there's no base-URL to configure.
 </details>
 
 <details>
-<summary><b>▸ Custom domain</b> &nbsp;·&nbsp; any host</summary>
+<summary><b>Custom domain</b> &nbsp;·&nbsp; any host</summary>
 
 <br>
 
