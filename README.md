@@ -5,7 +5,7 @@
 <h1>Cut</h1>
 
 <p><strong>A tiny, self-hosted URL shortener — short links that are entirely yours.</strong><br/>
-Owner-only admin, protected by a single password. Deploy it anywhere in one click:</p>
+Owner-only admin, protected by a single password. Pick a deployment option below:</p>
 
 <p>
   <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMendyLanda%2Fcut&project-name=cut&repository-name=cut&env=ADMIN_PASSWORD&envDescription=Password%20to%20protect%20the%20admin%20page&envLink=https%3A%2F%2Fgithub.com%2FMendyLanda%2Fcut%23local-development&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22upstash%22%2C%22productSlug%22%3A%22upstash-kv%22%2C%22protocol%22%3A%22storage%22%7D%5D"><img alt="Deploy with Vercel" src="https://vercel.com/button" height="32"></a>
@@ -61,10 +61,10 @@ Any other value falls back to the landing page.
 
 ## Deploy
 
-One click, then a couple of prompts. Pick your host for the details:
+Pick your host for the details:
 
 <details>
-<summary><b>▸ Vercel</b> &nbsp;·&nbsp; storage: Upstash Redis (from the Marketplace)</summary>
+<summary><b>Vercel</b> &nbsp;·&nbsp; storage: Upstash Redis (from the Marketplace)</summary>
 
 <br>
 
@@ -88,7 +88,7 @@ If the storage step doesn't appear, open your project → **Storage** →
 </details>
 
 <details>
-<summary><b>▸ Cloudflare Workers</b> &nbsp;·&nbsp; storage: native KV (auto-created)</summary>
+<summary><b>Cloudflare Workers</b> &nbsp;·&nbsp; storage: native KV (auto-created)</summary>
 
 <br>
 
@@ -107,7 +107,7 @@ database to set up:
 </details>
 
 <details>
-<summary><b>▸ Railway</b> &nbsp;·&nbsp; storage: managed Redis (provisioned with the app)</summary>
+<summary><b>Railway</b> &nbsp;·&nbsp; storage: managed Redis (provisioned with the app)</summary>
 
 <br>
 
@@ -130,7 +130,7 @@ wiring works on **Fly.io** or a plain VPS — point it at any Redis.
 </details>
 
 <details>
-<summary><b>▸ Render</b> &nbsp;·&nbsp; storage: managed Key Value (provisioned with the app)</summary>
+<summary><b>Render</b> &nbsp;·&nbsp; storage: managed Key Value (provisioned with the app)</summary>
 
 <br>
 
@@ -156,20 +156,66 @@ Your links go live at `https://<service>.onrender.com`.
 
 </details>
 
+<a name="coolify"></a>
 <details>
-<summary><b>▸ Coolify / Dokploy / Docker</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
+<summary><b>Coolify</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
 
 <br>
 
-Run the whole stack on your own server. Cut ships as a prebuilt image,
-[`ghcr.io/mendylanda/cut`](https://github.com/MendyLanda/cut/pkgs/container/cut),
-and each option below pairs it with a private, persistent Redis — no external
-accounts, and no `CRON_SECRET` (self-hosted Redis doesn't archive).
+In Coolify, create a new resource with **Docker Compose Empty** and paste this
+Compose file into the editor. It runs the prebuilt Cut image with a private,
+persistent Redis, so no external database or `CRON_SECRET` is needed.
 
-**[Coolify](https://coolify.io)** — add **Cut** from the service catalog. Coolify
-generates the domain and a strong `ADMIN_PASSWORD` (find it under the service's
-environment variables) and wires the bundled Redis in as `REDIS_URL`. Template
-source: [`deploy/coolify/`](deploy/coolify).
+```yaml
+services:
+  cut:
+    image: ghcr.io/mendylanda/cut:latest
+    environment:
+      - SERVICE_FQDN_CUT_3000
+      - ADMIN_PASSWORD=${SERVICE_PASSWORD_ADMIN}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - cut-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  cut-redis-data:
+```
+
+Save and deploy the service. Coolify routes the generated domain to Cut on port
+3000 and generates `SERVICE_PASSWORD_ADMIN` for the admin login. Find the password
+under **Configuration → Environment Variables**, then open `/admin` on the
+generated domain. Redis stays private to the stack and keeps links in the
+`cut-redis-data` volume. The [Compose source](deploy/coolify/cut.yaml) is kept
+in this repo.
+
+</details>
+
+<details>
+<summary><b>Dokploy / Docker</b> &nbsp;·&nbsp; storage: bundled Redis (self-hosted)</summary>
+
+<br>
+
+Both options use the prebuilt
+[`ghcr.io/mendylanda/cut`](https://github.com/MendyLanda/cut/pkgs/container/cut)
+image with a private, persistent Redis. No external database or `CRON_SECRET`
+is needed.
 
 **[Dokploy](https://dokploy.com)** — pick **Cut** from **Templates**. Dokploy
 generates the domain + `ADMIN_PASSWORD` and provisions the Redis for you.
@@ -203,7 +249,7 @@ so there's no base-URL to configure.
 </details>
 
 <details>
-<summary><b>▸ Custom domain</b> &nbsp;·&nbsp; any host</summary>
+<summary><b>Custom domain</b> &nbsp;·&nbsp; any host</summary>
 
 <br>
 
@@ -272,8 +318,8 @@ Worker on `workerd` via `wrangler dev` (with a local KV namespace).
   (`hono/context-storage`), so `lib/store` stays the same across hosts.
 - **Docker** — the `Dockerfile` esbuild-bundles the Hono server to
   `dist/server.mjs` and publishes a minimal multi-arch image to
-  `ghcr.io/mendylanda/cut` via a GitHub Action. The self-hosted catalog
-  templates under `deploy/` run that image next to a bundled Redis.
+  `ghcr.io/mendylanda/cut` via a GitHub Action. The Compose files under
+  `deploy/` run that image next to a bundled Redis.
 - **Keepalive** — `/api/keepalive` does a real write so idle Upstash free
   databases aren't archived (~14 days; a PING doesn't count). On Vercel a daily
   [Cron](https://vercel.com/docs/cron-jobs) hits it; on Cloudflare KV and
